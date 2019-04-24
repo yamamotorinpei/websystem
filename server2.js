@@ -12,5 +12,5 @@ server.on( 'request', function(req,res) {
     res.end();
 });
 
-server.listen(3000);
+server.listen(80);
 
