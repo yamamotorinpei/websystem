@@ -16,7 +16,7 @@
 
 ### Paiza Cloudでのサーバの作成
 Sign inすると，画面中央に「新規サーバ作成」ボタンが現れるので，作成する．その際，サーバ名はそのまま利用して良い．
-その下の初期インストールするものの中で，Web開発の中の「Node.js」を選択し，「新規サーバ作成」を選ぶ
+その下の初期インストールするものの中で，Web開発の中の「node.js」を選択し，「新規サーバ作成」を選ぶ
 後々はデータベースの中の「MySQL」も利用するが，最初は「Node.js」のみで良い．
 
 ### Gitのユーザ名とメールアドレスを設定する
@@ -57,7 +57,14 @@ remote: Total 8 (delta 1), reused 5 (delta 1), pack-reused 0
 ~/websystem$ node server1.js
 ```
 
-すると左端にブラウザアイコンが追加されるので，クリックするとブラウザを経由してプログラムの出力を確認できる．
+ここでエラーが表示されてプログラムが停止する場合は，以下のように「sudo」を付けて実行すると良い．
+
+```
+~/websystem$ sudo node server1.js
+```
+
+すると左端にブラウザアイコンが追加されるので，
+クリックするとブラウザを経由してプログラムの出力を確認できる．
  
 ### リポジトリのFork
 各自のリポジトリを作成して，gitコマンドに習熟する．
@@ -81,7 +88,7 @@ Paiza Cloudの画面左上にある青いバー（「新規ファイル」の上
 ```
 ~$ git clone <ここに各自のリポジトリをcloneするためのURLを入れる>
 ~$ cd websystem
-~/websystem$ node server1.js
+~/websystem$ sudo node server1.js
 ```
 
 Paiza内のWebブラウザで動作を確認できる．
@@ -115,6 +122,104 @@ To https://github.com/sudahiroshi/webssystem.git
 「git push」がうまく動作していることを，githubで確認しよう．
 ファイル名の横に，入力したコメント（変更箇所など）が表示され，ファイルの内容が新しくなっていれば良い．
 
+### 動的なWebページを作る
+
+編集方法とアップロードまでできたので，次に動的なWebページを作成してみよう．
+ここで言う「動的」とは，サーバのプログラム内で何か処理を行ってクライアントに返すことである．
+（参考までに通常のWebページは「静的」である）
+
+動的な動作をするWebページのプログラムを以下に示す．
+ここで，5行目（server.onの次の行）では，現在時刻を取得し，変数nowに代入している．
+その後，12行目でnowを表示している．
+
+```node
+var http = require('http');
+var server =http.createServer();
+
+server.on( 'request', function(req,res) {
+    var now = new Date().getTime();
+    res.writeHead( 200, {'Content-Type' : 'text/html' });
+    res.write('<!DOCTYPE html>');
+    res.write('<html lang=ja>');
+    res.write('<head><meta charset="UTF-8"></head>');
+    res.write('<body>');
+    res.write('<h1>Hello world</h1>');
+    res.write('現在の時刻は'+now);
+    res.write('</body>');
+    res.write('</html>');
+    res.end();
+});
+
+server.listen(80);
+```
+
+それでは実際に動かして確認してみよう．
+もう動かし方は覚えたと思うので，ファイル名が```server3.js```であることだけを記しておく．
+なお，現在時刻はきちんと整形しなければ，時刻として読めない数字が表示されるのみである．
+今回は，数字が表示されれば良いものとする．
+
+### ファイル名によって異なるページを返す
+
+通常，Webページは多くのHTMLファイルから構成される．
+しかし，上で紹介したWebサーバは，決まった内容しか返すことができない．
+そこで，複数のWebページに対応したサーバに拡張していく．
+
+まずは，プログラム中でURL（ファイル名などの表示したい情報）の取得方法を確認しよう．
+以下が，URLをターミナルに表示するプログラムである．
+（なお，これまでvarと書いていた箇所がconstやletに変更されている．これについては追い追い説明する）
+
+2行目が，URLを取得するためのライブラリを使用するための宣言である．
+そして，6行目でURLを取得し，13行目でターミナルに表示している．
+（console.logはターミナルに表示するためのメソッド）
+
+```node
+const http = require('http');
+const url = require('url');
+const server =http.createServer();
+
+server.on( 'request', function(req,res) {
+    let url_parse = url.parse(req.url,true);
+    res.writeHead( 200, {'Content-Type' : 'text/html' });
+    res.write('<!DOCTYPE html>');
+    res.write('<html lang=ja>');
+    res.write('<head><meta charset="UTF-8"></head>');
+    res.write('<body>');
+    res.write('<h1>Hello world</h1>');
+    console.log(url_parse);
+    res.write('</body>');
+    res.write('</html>');
+    res.end();
+});
+
+server.listen(80);
+```
+
+プログラムの流れを理解したら，動作確認をしてみよう．
+ファイル名は```server4.js```である．
+Webブラウザからアクセスすると，ターミナル上に以下の内容が表示される．
+この中の，pathnameやpathがファイル名に相当する．
+
+```
+
+Url {
+  protocol: null,
+  slashes: null,
+  auth: null,
+  host: null,
+  port: null,
+  hostname: null,
+  hash: null,
+  search: null,
+  query: {},
+  pathname: '/',
+  path: '/',
+  href: '/' }
+```
 
 
+さて，続いてWebブラウザのURL欄を見てみよう．
+渡しの場合は```https://suda-hiroshi-1.paiza-user.cloud/```というURLが入力されている．
+ここで，最後の```/```の後ろに```test.html```などと付けて，server4.jsの出力を見てみよう．
+すると，pathnameなどに変化が現れているはずである．
 
+よって，if文やswitch文を使って，pathnameに一致する内容を返すプログラムに変更すれば良いことになる．
